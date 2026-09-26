@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# NHANES raw data
+data/raw/*.xpt
+
+# Generated processed dataset
+data/processed/*.csv
+
+# Generated figures
+figures/*.png
+figures/*.jpg
+figures/*.jpeg
+figures/*.pdf
+
+# Generated results
+results/*.csv
+results/*.xlsx
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
