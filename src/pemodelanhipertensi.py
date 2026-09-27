@@ -19,7 +19,7 @@ from sklearn.metrics import (
     classification_report
 )
 
-df = pd.read_csv("data/processed/dataset_hypertension.csv")
+df = pd.read_csv("dataset_hypertension.csv")
 
 print("Ukuran data:", df.shape)
 print(df.head())
@@ -533,12 +533,10 @@ print(
     hasil_awal.round(4)
 )
 
-os.makedirs("results", exist_ok=True)
-
 #FIGURE EXPORT
 import os
 
-FIGURE_DIR = "figures"
+FIGURE_DIR = "figures_pdf"
 os.makedirs(FIGURE_DIR, exist_ok=True)
 
 plt.rcParams["pdf.fonttype"] = 42
@@ -836,6 +834,14 @@ print(
     hasil_akhir.round(4)
 )
 
+# Fungsi untuk menyimpan figure dalam format PDF
+def save_figure(name):
+    plt.savefig(
+        f"{name}.pdf",
+        format="pdf",
+        bbox_inches="tight"
+    )
+
 #SHAP Random Forest
 import shap
 
@@ -845,51 +851,135 @@ print("SHAP values shape :", shap_values_rf.values.shape)
 print("Base values shape :", shap_values_rf.base_values.shape)
 print("Data shape        :", shap_values_rf.data.shape)
 shap_values_rf_class1 = shap_values_rf[:, :, 1]
-# Beeswarm
 plt.figure(figsize=(10, 7))
 
-shap.plots.beeswarm( 
-    shap_values_rf_class1, 
-    max_display=len(X_test.columns), 
-    show=False 
+shap.plots.beeswarm(
+    shap_values_rf_class1,
+    max_display=len(X_test.columns),
+    show=False
 )
 
-plt.title("SHAP Beeswarm Plot – Tuned Random Forest") 
+ax = plt.gca()
+
+# Tick labels
+ax.tick_params(
+    axis="both",
+    labelsize=12
+)
+
+# Feature names
+for label in ax.get_yticklabels():
+    label.set_fontsize(12)
+
+# X-axis label
+ax.set_xlabel(
+    ax.get_xlabel(),
+    fontsize=13
+)
+
+# Color bar
+if len(ax.figure.axes) > 1:
+    cbar_ax = ax.figure.axes[-1]
+
+    cbar_ax.tick_params(
+        labelsize=11
+    )
+
+    cbar_ax.set_ylabel(
+        cbar_ax.get_ylabel(),
+        fontsize=12
+    )
+
+plt.title(
+    "SHAP Beeswarm Plot – Tuned Random Forest",
+    fontsize=15
+)
+
 plt.tight_layout()
 
 save_figure("Figure_SHAP_RF_beeswarm")
 
 plt.show()
-# Bar
+
+
+# ============================================================
+# Figure 3 - SHAP Feature Importance Random Forest
+# ============================================================
+
 plt.figure(figsize=(10, 7))
 
-shap.plots.bar( 
-    shap_values_rf_class1, 
-    max_display=len(X_test.columns), 
-    show=False 
+shap.plots.bar(
+    shap_values_rf_class1,
+    max_display=len(X_test.columns),
+    show=False
 )
 
-plt.title("SHAP Feature Importance - Tuned Random Forest") 
+ax = plt.gca()
+
+ax.tick_params(
+    axis="both",
+    labelsize=12
+)
+
+for label in ax.get_yticklabels():
+    label.set_fontsize(12)
+
+ax.set_xlabel(
+    ax.get_xlabel(),
+    fontsize=13
+)
+
+plt.title(
+    "SHAP Feature Importance - Tuned Random Forest",
+    fontsize=15
+)
+
 plt.tight_layout()
 
 save_figure("Figure_SHAP_RF_bar")
 
 plt.show()
-# Waterfall
+
+
+# ============================================================
+# Figure 7 - SHAP Waterfall Random Forest
+# ============================================================
+
 plt.figure(figsize=(10, 7))
 
-shap.plots.waterfall( 
-    shap_values_rf_class1[0], 
-    max_display=len(X_test.columns), 
-    show=False 
+shap.plots.waterfall(
+    shap_values_rf_class1[0],
+    max_display=len(X_test.columns),
+    show=False
 )
 
-plt.title("SHAP Waterfall - Tuned Random Forest") 
+ax = plt.gca()
+
+# Tick labels
+ax.tick_params(
+    axis="both",
+    labelsize=12
+)
+
+# Feature names
+for label in ax.get_yticklabels():
+    label.set_fontsize(12)
+
+# Numerical annotations
+for text in ax.texts:
+    text.set_fontsize(12)
+
+plt.title(
+    "SHAP Waterfall - Tuned Random Forest",
+    fontsize=15
+)
+
 plt.tight_layout()
 
 save_figure("Figure_SHAP_RF_waterfall")
 
 plt.show()
+
 #SHAP XGBoost
 explainer_xgb = shap.TreeExplainer(
     best_xgb,
@@ -900,46 +990,131 @@ shap_values_xgb = explainer_xgb(X_test)
 print("SHAP values shape :", shap_values_xgb.values.shape)
 print("Base values shape :", shap_values_xgb.base_values.shape)
 print("Data shape        :", shap_values_xgb.data.shape)
-# Beeswarm
+# ============================================================
+# Figure 6 - SHAP Beeswarm XGBoost
+# ============================================================
+
 plt.figure(figsize=(10, 7))
 
-shap.plots.beeswarm( 
-    shap_values_xgb, 
-    max_display=len(X_test.columns), 
-    show=False 
+shap.plots.beeswarm(
+    shap_values_xgb,
+    max_display=len(X_test.columns),
+    show=False
 )
 
-plt.title("SHAP Beeswarm - Tuned XGBoost") 
+ax = plt.gca()
+
+ax.tick_params(
+    axis="both",
+    labelsize=12
+)
+
+for label in ax.get_yticklabels():
+    label.set_fontsize(12)
+
+ax.set_xlabel(
+    ax.get_xlabel(),
+    fontsize=13
+)
+
+# Color bar
+if len(ax.figure.axes) > 1:
+    cbar_ax = ax.figure.axes[-1]
+
+    cbar_ax.tick_params(
+        labelsize=11
+    )
+
+    cbar_ax.set_ylabel(
+        cbar_ax.get_ylabel(),
+        fontsize=12
+    )
+
+plt.title(
+    "SHAP Beeswarm - Tuned XGBoost",
+    fontsize=15
+)
+
 plt.tight_layout()
 
 save_figure("Figure_SHAP_XGB_beeswarm")
 
 plt.show()
-# Bar
+
+
+# ============================================================
+# SHAP Feature Importance XGBoost
+# ============================================================
+
 plt.figure(figsize=(10, 7))
 
-shap.plots.bar( 
-    shap_values_xgb, 
-    max_display=len(X_test.columns), 
-    show=False 
+shap.plots.bar(
+    shap_values_xgb,
+    max_display=len(X_test.columns),
+    show=False
 )
 
-plt.title("SHAP Feature Importance - Tuned XGBoost") 
+ax = plt.gca()
+
+ax.tick_params(
+    axis="both",
+    labelsize=12
+)
+
+for label in ax.get_yticklabels():
+    label.set_fontsize(12)
+
+ax.set_xlabel(
+    ax.get_xlabel(),
+    fontsize=13
+)
+
+plt.title(
+    "SHAP Feature Importance - Tuned XGBoost",
+    fontsize=15
+)
+
 plt.tight_layout()
 
 save_figure("Figure_SHAP_XGB_bar")
 
 plt.show()
-# Waterfall
+
+
+# ============================================================
+# Figure 8 - SHAP Waterfall XGBoost
+# ============================================================
+
 plt.figure(figsize=(10, 7))
 
-shap.plots.waterfall( 
-    shap_values_xgb[0], 
-    max_display=len(X_test.columns), 
-    show=False 
+shap.plots.waterfall(
+    shap_values_xgb[0],
+    max_display=len(X_test.columns),
+    show=False
 )
 
-plt.title("SHAP Waterfall - Tuned XGBoost") 
+ax = plt.gca()
+
+ax.tick_params(
+    axis="both",
+    labelsize=13
+)
+
+for label in ax.get_yticklabels():
+    label.set_fontsize(13)
+
+for label in ax.get_xticklabels():
+    label.set_fontsize(13)
+
+# Numerical annotations
+for text in ax.texts:
+    text.set_fontsize(13)
+
+plt.title(
+    "SHAP Waterfall - Tuned XGBoost",
+    fontsize=15
+)
+
 plt.tight_layout()
 
 save_figure("Figure_SHAP_XGB_waterfall")
@@ -1042,7 +1217,7 @@ print(
 # ------------------------------------------------------------
 
 shap_comparison.to_csv(
-    "results/shap_cross_model_comparison.csv",
+    "shap_cross_model_comparison.csv",
     index=False
 )
 
@@ -1151,6 +1326,380 @@ def bootstrap_metrics(
         )
     }
 
+# ============================================================
+# C. BOOTSTRAP ROBUSTNESS OF CROSS-MODEL SHAP RANKING
+# ============================================================
+
+print("\n" + "=" * 70)
+print("C. BOOTSTRAP ROBUSTNESS OF CROSS-MODEL SHAP RANKING")
+print("=" * 70)
+
+
+# ------------------------------------------------------------
+# 1. Bootstrap settings
+# ------------------------------------------------------------
+
+N_BOOTSTRAP_SHAP = 2000
+RANDOM_STATE_SHAP = 42
+
+rng_shap = np.random.RandomState(
+    RANDOM_STATE_SHAP
+)
+
+
+# ------------------------------------------------------------
+# 2. Extract SHAP values
+# ------------------------------------------------------------
+
+rf_shap_matrix = np.asarray(
+    shap_values_rf_class1.values
+)
+
+xgb_shap_matrix = np.asarray(
+    shap_values_xgb_class1.values
+)
+
+features_shap = X_test.columns.tolist()
+
+n_test = rf_shap_matrix.shape[0]
+
+
+# ------------------------------------------------------------
+# 3. Storage
+# ------------------------------------------------------------
+
+bootstrap_spearman = []
+
+bootstrap_rf_ranks = []
+
+bootstrap_xgb_ranks = []
+
+bootstrap_rf_top3 = []
+
+bootstrap_xgb_top3 = []
+
+bootstrap_top3_agreement = []
+
+
+# ------------------------------------------------------------
+# 4. Bootstrap resampling
+# ------------------------------------------------------------
+
+for b in range(N_BOOTSTRAP_SHAP):
+
+    # Same bootstrap sample for both models
+    indices = rng_shap.randint(
+        0,
+        n_test,
+        size=n_test
+    )
+
+    rf_boot = rf_shap_matrix[
+        indices,
+        :
+    ]
+
+    xgb_boot = xgb_shap_matrix[
+        indices,
+        :
+    ]
+
+
+    # --------------------------------------------------------
+    # Mean absolute SHAP
+    # --------------------------------------------------------
+
+    rf_mean_abs = np.abs(
+        rf_boot
+    ).mean(axis=0)
+
+    xgb_mean_abs = np.abs(
+        xgb_boot
+    ).mean(axis=0
+    )
+
+
+    # --------------------------------------------------------
+    # Rank features
+    # --------------------------------------------------------
+
+    rf_rank = pd.Series(
+        rf_mean_abs,
+        index=features_shap
+    ).rank(
+        ascending=False,
+        method="min"
+    )
+
+    xgb_rank = pd.Series(
+        xgb_mean_abs,
+        index=features_shap
+    ).rank(
+        ascending=False,
+        method="min"
+    )
+
+
+    # --------------------------------------------------------
+    # Spearman correlation
+    # --------------------------------------------------------
+
+    rho_boot, _ = spearmanr(
+        rf_rank.values,
+        xgb_rank.values
+    )
+
+    bootstrap_spearman.append(
+        rho_boot
+    )
+
+
+    # --------------------------------------------------------
+    # Store rankings
+    # --------------------------------------------------------
+
+    bootstrap_rf_ranks.append(
+        rf_rank.values
+    )
+
+    bootstrap_xgb_ranks.append(
+        xgb_rank.values
+    )
+
+
+    # --------------------------------------------------------
+    # Top-3 features
+    # --------------------------------------------------------
+
+    rf_top3 = set(
+        np.argsort(
+            rf_mean_abs
+        )[-3:]
+    )
+
+    xgb_top3 = set(
+        np.argsort(
+            xgb_mean_abs
+        )[-3:]
+    )
+
+
+    bootstrap_rf_top3.append(
+        rf_top3
+    )
+
+    bootstrap_xgb_top3.append(
+        xgb_top3
+    )
+
+
+    # --------------------------------------------------------
+    # Top-3 agreement
+    # --------------------------------------------------------
+
+    bootstrap_top3_agreement.append(
+        rf_top3 == xgb_top3
+    )
+
+
+# ------------------------------------------------------------
+# 5. Bootstrap Spearman results
+# ------------------------------------------------------------
+
+bootstrap_spearman = np.asarray(
+    bootstrap_spearman
+)
+
+rho_median = np.median(
+    bootstrap_spearman
+)
+
+rho_lower = np.percentile(
+    bootstrap_spearman,
+    2.5
+)
+
+rho_upper = np.percentile(
+    bootstrap_spearman,
+    97.5
+)
+
+
+print("\nBootstrap Spearman agreement:")
+
+print(
+    f"Median rho = {rho_median:.4f}"
+)
+
+print(
+    f"95% CI = "
+    f"({rho_lower:.4f}, {rho_upper:.4f})"
+)
+
+
+# ------------------------------------------------------------
+# 6. Bootstrap Top-3 agreement
+# ------------------------------------------------------------
+
+top3_agreement_rate = np.mean(
+    bootstrap_top3_agreement
+)
+
+print("\nBootstrap Top-3 agreement:")
+
+print(
+    f"Agreement = "
+    f"{top3_agreement_rate * 100:.2f}%"
+)
+
+
+# ------------------------------------------------------------
+# 7. Feature-level rank stability
+# ------------------------------------------------------------
+
+bootstrap_rf_ranks = np.asarray(
+    bootstrap_rf_ranks
+)
+
+bootstrap_xgb_ranks = np.asarray(
+    bootstrap_xgb_ranks
+)
+
+
+rank_stability = pd.DataFrame({
+
+    "Feature": features_shap,
+
+    "RF_Median_Rank": np.median(
+        bootstrap_rf_ranks,
+        axis=0
+    ),
+
+    "RF_Rank_CI_Lower": np.percentile(
+        bootstrap_rf_ranks,
+        2.5,
+        axis=0
+    ),
+
+    "RF_Rank_CI_Upper": np.percentile(
+        bootstrap_rf_ranks,
+        97.5,
+        axis=0
+    ),
+
+    "XGB_Median_Rank": np.median(
+        bootstrap_xgb_ranks,
+        axis=0
+    ),
+
+    "XGB_Rank_CI_Lower": np.percentile(
+        bootstrap_xgb_ranks,
+        2.5,
+        axis=0
+    ),
+
+    "XGB_Rank_CI_Upper": np.percentile(
+        bootstrap_xgb_ranks,
+        97.5,
+        axis=0
+    )
+})
+
+
+# ------------------------------------------------------------
+# 8. Top-3 frequency of each feature
+# ------------------------------------------------------------
+
+rf_top3_frequency = []
+
+xgb_top3_frequency = []
+
+
+for feature_index in range(
+    len(features_shap)
+):
+
+    rf_count = sum(
+        feature_index in top3
+        for top3 in bootstrap_rf_top3
+    )
+
+    xgb_count = sum(
+        feature_index in top3
+        for top3 in bootstrap_xgb_top3
+    )
+
+    rf_top3_frequency.append(
+        rf_count / N_BOOTSTRAP_SHAP
+    )
+
+    xgb_top3_frequency.append(
+        xgb_count / N_BOOTSTRAP_SHAP
+    )
+
+
+rank_stability[
+    "RF_Top3_Frequency"
+] = rf_top3_frequency
+
+rank_stability[
+    "XGB_Top3_Frequency"
+] = xgb_top3_frequency
+
+
+# ------------------------------------------------------------
+# 9. Sort by RF median rank
+# ------------------------------------------------------------
+
+rank_stability = rank_stability.sort_values(
+    "RF_Median_Rank"
+).reset_index(
+    drop=True
+)
+
+
+# ------------------------------------------------------------
+# 10. Display results
+# ------------------------------------------------------------
+
+print(
+    "\nFeature-level SHAP rank stability:"
+)
+
+print(
+    rank_stability.round(3)
+)
+
+
+# ------------------------------------------------------------
+# 11. Save results
+# ------------------------------------------------------------
+
+rank_stability.to_csv(
+    "shap_bootstrap_rank_stability.csv",
+    index=False
+)
+
+pd.DataFrame({
+    "Bootstrap_Spearman_Rho":
+        bootstrap_spearman
+}).to_csv(
+    "shap_bootstrap_spearman.csv",
+    index=False
+)
+
+
+print(
+    "\nBootstrap SHAP results saved:"
+)
+
+print(
+    "shap_bootstrap_rank_stability.csv"
+)
+
+print(
+    "shap_bootstrap_spearman.csv"
+)
 
 # ------------------------------------------------------------
 # Predictions dari model
@@ -1224,7 +1773,7 @@ print(
 
 
 bootstrap_table.to_csv(
-    "results/bootstrap_95CI_results.csv",
+    "bootstrap_95CI_results.csv",
     index=False
 )
 
@@ -1559,13 +2108,13 @@ print(
 # Simpan hasil
 # ------------------------------------------------------------
 delong_df.to_csv(
-    "results/delong_auc_comparison.csv",
+    "delong_auc_comparison.csv",
     index=False
 )
 
 print(
     "\nHasil DeLong disimpan sebagai: "
-    "results/delong_auc_comparison.csv"
+    "delong_auc_comparison.csv"
 )
 # ============================================================
 # D. CORRELATION AMONG ANTHROPOMETRIC VARIABLES
@@ -1640,12 +2189,12 @@ plt.show()
 # Simpan correlation matrix
 # ------------------------------------------------------------
 corr_matrix.to_csv(
-    "results/spearman_anthropometric_correlation.csv"
+    "spearman_anthropometric_correlation.csv"
 )
 
 print(
     "\nCorrelation matrix disimpan sebagai: "
-    "results/spearman_anthropometric_correlation.csv"
+    "spearman_anthropometric_correlation.csv"
 )
 # ============================================================
 # RINGKASAN ANALISIS TAMBAHAN
