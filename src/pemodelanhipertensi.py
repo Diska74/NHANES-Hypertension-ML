@@ -550,56 +550,109 @@ def save_figure(filename):
     )
 
 #ROC CURVE
-fpr_logreg, tpr_logreg, _ = roc_curve(
-    y_test,
-    prob_logreg
-)
-fpr_rf, tpr_rf, _ = roc_curve(
-    y_test,
-    prob_rf
-)
-fpr_xgb, tpr_xgb, _ = roc_curve(
-    y_test,
-    prob_xgb
-)
-plt.figure(
-    figsize=(8, 6)
-)
-plt.plot(
+plt.rcParams.update({
+    "font.family": "serif",
+    "font.size": 11,
+    "axes.labelsize": 11,
+    "xtick.labelsize": 11,
+    "ytick.labelsize": 11,
+    "legend.fontsize": 9.5,
+    "pdf.fonttype": 42,
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+})
+
+# ============================================================
+# ROC CURVE BEFORE TUNING
+# ============================================================
+
+fpr_logreg, tpr_logreg, _ = roc_curve(y_test, prob_logreg)
+fpr_rf, tpr_rf, _ = roc_curve(y_test, prob_rf)
+fpr_xgb, tpr_xgb, _ = roc_curve(y_test, prob_xgb)
+
+# Figure sedikit lebih lebar agar legend tidak bertumpuk
+fig, ax = plt.subplots(figsize=(5.2, 4.3))
+
+# Logistic Regression
+ax.plot(
     fpr_logreg,
     tpr_logreg,
-    label=f"Logistic Regression (AUC = {auc_logreg:.3f})"
+    lw=1.8,
+    color="#1f77b4",
+    label=f"Logistic Regression (AUC = {auc_logreg:.4f})"
 )
-plt.plot(
+
+# Random Forest
+ax.plot(
     fpr_rf,
     tpr_rf,
-    label=f"Random Forest (AUC = {auc_rf:.3f})"
+    lw=1.8,
+    color="#d62728",
+    label=f"Random Forest (AUC = {auc_rf:.4f})"
 )
-plt.plot(
+
+# XGBoost
+ax.plot(
     fpr_xgb,
     tpr_xgb,
-    label=f"XGBoost (AUC = {auc_xgb:.3f})"
+    lw=1.8,
+    color="#2ca02c",
+    label=f"XGBoost (AUC = {auc_xgb:.4f})"
 )
-plt.plot(
+
+# Garis diagonal / random classifier
+ax.plot(
     [0, 1],
     [0, 1],
-    linestyle="--"
+    linestyle="--",
+    color="black",
+    lw=1.0,
+    label="Random classifier"
 )
-plt.xlabel(
-    "False Positive Rate"
-)
-plt.ylabel(
-    "True Positive Rate"
-)
-plt.title(
-    "ROC Curve before Tuning"
-)
-plt.legend()
-plt.tight_layout()
 
-save_figure("Figure_ROC_baseline")
+# Label sumbu
+ax.set_xlabel("False Positive Rate")
+ax.set_ylabel("True Positive Rate")
 
-#plt.show()
+# Batas sumbu
+ax.set_xlim(0, 1)
+ax.set_ylim(0, 1.02)
+
+# Tick
+ax.tick_params(axis="both", labelsize=10)
+
+# Legend
+ax.legend(
+    loc="lower right",
+    frameon=False,
+    fontsize=9.5,
+    handlelength=2.5,
+    handletextpad=0.6,
+    labelspacing=0.5
+)
+
+# Layout
+fig.tight_layout()
+
+# ============================================================
+# SAVE
+# ============================================================
+
+# PDF vector
+fig.savefig(
+    "fig2_roc_before_tuning.pdf",
+    format="pdf",
+    bbox_inches="tight"
+)
+
+# PNG 300 dpi
+fig.savefig(
+    "fig2_roc_before_tuning.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.close(fig)
 
 #Hyperparameter Tuning
 from sklearn.model_selection import GridSearchCV
@@ -843,283 +896,689 @@ def save_figure(name):
     )
 
 #SHAP Random Forest
-import shap
+# ============================================================
+# SHAP ANALYSIS
+# Random Forest and XGBoost
+# Publication-ready figures
+# ============================================================
 
-explainer_rf = shap.Explainer(best_rf, X_train)
+import matplotlib.pyplot as plt
+import shap
+import numpy as np
+
+# ============================================================
+# GLOBAL FIGURE SETTINGS
+# ============================================================
+
+FS = 11  # Main manuscript font size
+
+plt.rcParams.update({
+    "font.family": "serif",
+    "font.size": FS,
+
+    # Axis
+    "axes.labelsize": FS,
+    "axes.titlesize": FS,
+
+    # Ticks
+    "xtick.labelsize": FS,
+    "ytick.labelsize": FS,
+
+    # Legend
+    "legend.fontsize": FS,
+
+    # Vector PDF
+    "pdf.fonttype": 42,
+    "ps.fonttype": 42,
+
+    # SVG font type if needed
+    "svg.fonttype": "none",
+
+    # Prevent unwanted clipping
+    "figure.autolayout": False
+})
+
+
+# ============================================================
+# PUBLICATION-FRIENDLY FEATURE LABELS
+# ============================================================
+
+PRETTY = {
+    "Age": "Age",
+    "Gender": "Gender",
+    "Education": "Education",
+    "Income_Poverty_Ratio": "Income-to-poverty ratio",
+    "Height": "Height",
+    "Weight": "Weight",
+    "BMI": "BMI",
+    "Waist": "Waist circumference"
+}
+
+# Original feature order
+FEATURES = list(X_test.columns)
+
+# Publication-friendly names
+NAMES = [PRETTY.get(col, col) for col in FEATURES]
+
+
+# ============================================================
+# GENERAL FIGURE STYLING FUNCTION
+# ============================================================
+
+def style_fig(fig, fs=FS):
+    """
+    Apply consistent manuscript-sized fonts to all
+    internal figure elements.
+    """
+
+    for ax in fig.axes:
+
+        # ----------------------------------------------------
+        # Axis labels
+        # ----------------------------------------------------
+        ax.xaxis.label.set_fontsize(fs)
+        ax.yaxis.label.set_fontsize(fs)
+
+        # ----------------------------------------------------
+        # Tick labels
+        # ----------------------------------------------------
+        ax.tick_params(
+            axis="both",
+            which="major",
+            labelsize=fs
+        )
+
+        ax.tick_params(
+            axis="both",
+            which="minor",
+            labelsize=fs
+        )
+
+        # ----------------------------------------------------
+        # Existing text / annotations
+        # ----------------------------------------------------
+        for txt in ax.texts:
+            txt.set_fontsize(fs)
+
+        # ----------------------------------------------------
+        # X and Y tick labels
+        # ----------------------------------------------------
+        for txt in ax.get_xticklabels():
+            txt.set_fontsize(fs)
+
+        for txt in ax.get_yticklabels():
+            txt.set_fontsize(fs)
+
+        # ----------------------------------------------------
+        # Axis title, if SHAP creates one
+        # ----------------------------------------------------
+        ax.title.set_fontsize(fs)
+
+    # --------------------------------------------------------
+    # Figure-level text
+    # --------------------------------------------------------
+    for txt in fig.texts:
+        txt.set_fontsize(fs)
+
+
+# ============================================================
+# COLORBAR STYLING
+# ============================================================
+
+def style_colorbar(fig, fs=FS):
+
+    # SHAP normally creates an additional axis for colorbar
+    if len(fig.axes) > 1:
+
+        cbar_ax = fig.axes[-1]
+
+        cbar_ax.tick_params(
+            axis="both",
+            labelsize=fs
+        )
+
+        cbar_ax.set_ylabel(
+            "Feature value",
+            fontsize=fs
+        )
+
+        for txt in cbar_ax.get_yticklabels():
+            txt.set_fontsize(fs)
+
+        for txt in cbar_ax.get_xticklabels():
+            txt.set_fontsize(fs)
+
+
+# ============================================================
+# SAVE FIGURE
+# ============================================================
+
+def save_figure(name):
+
+    # --------------------------------------------------------
+    # Vector PDF
+    # --------------------------------------------------------
+    plt.savefig(
+        f"{name}.pdf",
+        format="pdf",
+        bbox_inches="tight",
+        pad_inches=0.05
+    )
+
+    # --------------------------------------------------------
+    # PNG 300 dpi
+    # --------------------------------------------------------
+    plt.savefig(
+        f"{name}.png",
+        format="png",
+        dpi=300,
+        bbox_inches="tight",
+        pad_inches=0.05
+    )
+
+
+# ============================================================
+# ============================================================
+# RANDOM FOREST SHAP
+# ============================================================
+# ============================================================
+
+# ------------------------------------------------------------
+# SHAP Explainer
+# ------------------------------------------------------------
+
+explainer_rf = shap.Explainer(
+    best_rf,
+    X_train
+)
+
 shap_values_rf = explainer_rf(X_test)
-print("SHAP values shape :", shap_values_rf.values.shape)
-print("Base values shape :", shap_values_rf.base_values.shape)
-print("Data shape        :", shap_values_rf.data.shape)
-shap_values_rf_class1 = shap_values_rf[:, :, 1]
-plt.figure(figsize=(10, 7))
+
+print("RF SHAP values shape :", shap_values_rf.values.shape)
+print("RF base values shape :", shap_values_rf.base_values.shape)
+print("RF data shape        :", shap_values_rf.data.shape)
+
+
+# ============================================================
+# RANDOM FOREST - POSITIVE CLASS
+# ============================================================
+
+# For binary classification with SHAP output:
+# shape = (n_samples, n_features, n_classes)
+
+if shap_values_rf.values.ndim == 3:
+
+    shap_values_rf_class1 = shap_values_rf[:, :, 1]
+
+else:
+
+    shap_values_rf_class1 = shap_values_rf
+
+
+# Apply publication-friendly feature names
+shap_values_rf_class1.feature_names = NAMES
+
+
+# ============================================================
+# FIGURE 5
+# SHAP BEESWARM - RANDOM FOREST
+# ============================================================
+
+plt.close("all")
 
 shap.plots.beeswarm(
     shap_values_rf_class1,
-    max_display=len(X_test.columns),
-    show=False
+    max_display=len(FEATURES),
+    show=False,
+    plot_size=(5.8, 4.1)
 )
 
-ax = plt.gca()
+fig = plt.gcf()
 
-# Tick labels
-ax.tick_params(
-    axis="both",
-    labelsize=12
+# Explicit final figure size
+fig.set_size_inches(5.8, 4.1)
+
+# Apply manuscript font
+style_fig(fig, FS)
+
+# Style colorbar
+style_colorbar(fig, FS)
+
+# ------------------------------------------------------------
+# No figure title
+# Title should be provided in LaTeX caption
+# ------------------------------------------------------------
+
+fig.tight_layout(pad=0.6)
+
+save_figure(
+    "Figure_5_SHAP_RF_beeswarm"
 )
-
-# Feature names
-for label in ax.get_yticklabels():
-    label.set_fontsize(12)
-
-# X-axis label
-ax.set_xlabel(
-    ax.get_xlabel(),
-    fontsize=13
-)
-
-# Color bar
-if len(ax.figure.axes) > 1:
-    cbar_ax = ax.figure.axes[-1]
-
-    cbar_ax.tick_params(
-        labelsize=11
-    )
-
-    cbar_ax.set_ylabel(
-        cbar_ax.get_ylabel(),
-        fontsize=12
-    )
-
-plt.title(
-    "SHAP Beeswarm Plot – Tuned Random Forest",
-    fontsize=15
-)
-
-plt.tight_layout()
-
-save_figure("Figure_SHAP_RF_beeswarm")
 
 plt.show()
+plt.close(fig)
 
 
 # ============================================================
-# Figure 3 - SHAP Feature Importance Random Forest
+# RANDOM FOREST - FEATURE IMPORTANCE
 # ============================================================
 
-plt.figure(figsize=(10, 7))
+plt.close("all")
 
 shap.plots.bar(
     shap_values_rf_class1,
-    max_display=len(X_test.columns),
+    max_display=len(FEATURES),
     show=False
 )
 
-ax = plt.gca()
+fig = plt.gcf()
 
-ax.tick_params(
-    axis="both",
-    labelsize=12
+fig.set_size_inches(
+    5.2,
+    3.7
 )
 
-for label in ax.get_yticklabels():
-    label.set_fontsize(12)
+ax = plt.gca()
 
 ax.set_xlabel(
-    ax.get_xlabel(),
-    fontsize=13
+    "Mean |SHAP value| (probability scale)",
+    fontsize=FS
 )
 
-plt.title(
-    "SHAP Feature Importance - Tuned Random Forest",
-    fontsize=15
+style_fig(fig, FS)
+
+fig.tight_layout(pad=0.6)
+
+save_figure(
+    "Figure_SHAP_RF_bar"
 )
-
-plt.tight_layout()
-
-save_figure("Figure_SHAP_RF_bar")
 
 plt.show()
+plt.close(fig)
 
 
 # ============================================================
-# Figure 7 - SHAP Waterfall Random Forest
+# ============================================================
+# XGBOOST SHAP
+# ============================================================
 # ============================================================
 
-plt.figure(figsize=(10, 7))
-
-shap.plots.waterfall(
-    shap_values_rf_class1[0],
-    max_display=len(X_test.columns),
-    show=False
-)
-
-ax = plt.gca()
-
-# Tick labels
-ax.tick_params(
-    axis="both",
-    labelsize=12
-)
-
-# Feature names
-for label in ax.get_yticklabels():
-    label.set_fontsize(12)
-
-# Numerical annotations
-for text in ax.texts:
-    text.set_fontsize(12)
-
-plt.title(
-    "SHAP Waterfall - Tuned Random Forest",
-    fontsize=15
-)
-
-plt.tight_layout()
-
-save_figure("Figure_SHAP_RF_waterfall")
-
-plt.show()
-
-#SHAP XGBoost
 explainer_xgb = shap.TreeExplainer(
     best_xgb,
     feature_perturbation="tree_path_dependent"
 )
+
 shap_values_xgb = explainer_xgb(X_test)
 
-print("SHAP values shape :", shap_values_xgb.values.shape)
-print("Base values shape :", shap_values_xgb.base_values.shape)
-print("Data shape        :", shap_values_xgb.data.shape)
+print("XGB SHAP values shape :", shap_values_xgb.values.shape)
+print("XGB base values shape :", shap_values_xgb.base_values.shape)
+print("XGB data shape        :", shap_values_xgb.data.shape)
+
+
+# Apply publication-friendly feature names
+shap_values_xgb.feature_names = NAMES
+
+
 # ============================================================
-# Figure 6 - SHAP Beeswarm XGBoost
+# FIGURE 6
+# SHAP BEESWARM - XGBOOST
 # ============================================================
 
-plt.figure(figsize=(10, 7))
+plt.close("all")
 
 shap.plots.beeswarm(
     shap_values_xgb,
-    max_display=len(X_test.columns),
-    show=False
+    max_display=len(FEATURES),
+    show=False,
+    plot_size=(5.8, 4.1)
 )
 
-ax = plt.gca()
+fig = plt.gcf()
 
-ax.tick_params(
-    axis="both",
-    labelsize=12
+fig.set_size_inches(
+    5.8,
+    4.1
 )
 
-for label in ax.get_yticklabels():
-    label.set_fontsize(12)
+style_fig(fig, FS)
 
-ax.set_xlabel(
-    ax.get_xlabel(),
-    fontsize=13
+style_colorbar(fig, FS)
+
+fig.tight_layout(pad=0.6)
+
+save_figure(
+    "Figure_6_SHAP_XGB_beeswarm"
 )
-
-# Color bar
-if len(ax.figure.axes) > 1:
-    cbar_ax = ax.figure.axes[-1]
-
-    cbar_ax.tick_params(
-        labelsize=11
-    )
-
-    cbar_ax.set_ylabel(
-        cbar_ax.get_ylabel(),
-        fontsize=12
-    )
-
-plt.title(
-    "SHAP Beeswarm - Tuned XGBoost",
-    fontsize=15
-)
-
-plt.tight_layout()
-
-save_figure("Figure_SHAP_XGB_beeswarm")
 
 plt.show()
+plt.close(fig)
 
 
 # ============================================================
-# SHAP Feature Importance XGBoost
+# XGBOOST - FEATURE IMPORTANCE
 # ============================================================
 
-plt.figure(figsize=(10, 7))
+plt.close("all")
 
 shap.plots.bar(
     shap_values_xgb,
-    max_display=len(X_test.columns),
+    max_display=len(FEATURES),
+    show=False
+)
+
+fig = plt.gcf()
+
+fig.set_size_inches(
+    5.2,
+    3.7
+)
+
+ax = plt.gca()
+
+ax.set_xlabel(
+    "Mean |SHAP value| (log-odds scale)",
+    fontsize=FS
+)
+
+style_fig(fig, FS)
+
+fig.tight_layout(pad=0.6)
+
+save_figure(
+    "Figure_SHAP_XGB_bar"
+)
+
+plt.show()
+plt.close(fig)
+# ============================================================
+# FIGURE 7 — RANDOM FOREST WATERFALL
+# ============================================================
+
+plt.close("all")
+
+fig = plt.figure(figsize=(5.2, 4.2))
+
+shap.plots.waterfall(
+    shap_values_rf_class1[0],
+    max_display=8,
     show=False
 )
 
 ax = plt.gca()
 
-ax.tick_params(
-    axis="both",
-    labelsize=12
-)
+# ============================================================
+# FONT SIZE — DISESUAIKAN AGAR SETARA DENGAN FIGURE 6
+# ============================================================
+
+FEATURE_FS = 10
+VALUE_FS   = 9
+TICK_FS    = 9
+LABEL_FS   = 10
+
+# ============================================================
+# STYLE FIGURE
+# ============================================================
+
+style_fig(fig, fs=FS)
+
+# ============================================================
+# ATUR SEMUA TEKS INTERNAL WATERFALL
+# ============================================================
+
+for txt in ax.texts:
+
+    txt.set_fontsize(VALUE_FS)
+
+# ============================================================
+# PERBESAR NAMA FITUR
+# ============================================================
 
 for label in ax.get_yticklabels():
-    label.set_fontsize(12)
+    label.set_fontsize(FEATURE_FS)
+
+# ============================================================
+# PERBESAR TICK SUMBU X
+# ============================================================
+
+for label in ax.get_xticklabels():
+    label.set_fontsize(TICK_FS)
+
+ax.tick_params(
+    axis="x",
+    labelsize=TICK_FS
+)
+
+# ============================================================
+# LABEL SUMBU X
+# ============================================================
 
 ax.set_xlabel(
-    ax.get_xlabel(),
-    fontsize=13
+    "SHAP value (impact on model output)",
+    fontsize=LABEL_FS
 )
 
-plt.title(
-    "SHAP Feature Importance - Tuned XGBoost",
-    fontsize=15
-)
+# ============================================================
+# PINDAHKAN ANOTASI SHAP KECIL
+# ============================================================
 
-plt.tight_layout()
+from matplotlib.transforms import ScaledTranslation
 
-save_figure("Figure_SHAP_XGB_bar")
+for txt in ax.texts:
+
+    label = txt.get_text().strip()
+
+    # --------------------------------------------------------
+    # NILAI POSITIF KECIL
+    # --------------------------------------------------------
+
+    if label in [
+        "+0.04",
+        "+0.03",
+        "+0.02",
+        "+0.01"
+    ]:
+
+        txt.set_transform(
+            txt.get_transform()
+            + ScaledTranslation(
+                10 / 72,
+                0,
+                fig.dpi_scale_trans
+            )
+        )
+
+        txt.set_ha("left")
+        txt.set_fontsize(VALUE_FS)
+        txt.set_clip_on(False)
+
+    # --------------------------------------------------------
+    # NILAI NEGATIF KECIL
+    # --------------------------------------------------------
+
+    elif label in [
+        "−0.04",
+        "−0.03",
+        "−0.02",
+        "−0.01",
+        "-0.04",
+        "-0.03",
+        "-0.02",
+        "-0.01"
+    ]:
+
+        txt.set_transform(
+            txt.get_transform()
+            + ScaledTranslation(
+                -10 / 72,
+                0,
+                fig.dpi_scale_trans
+            )
+        )
+
+        txt.set_ha("right")
+        txt.set_fontsize(VALUE_FS)
+        txt.set_clip_on(False)
+
+
+# ============================================================
+# LAYOUT
+# ============================================================
+
+fig.tight_layout(pad=0.8)
+
+# ============================================================
+# SIMPAN FIGURE 7
+# ============================================================
+
+save_figure("Fig7_RF_waterfall")
 
 plt.show()
+plt.close(fig)
 
 
 # ============================================================
-# Figure 8 - SHAP Waterfall XGBoost
+# FIGURE 8 — XGBOOST WATERFALL
 # ============================================================
 
-plt.figure(figsize=(10, 7))
+plt.close("all")
+
+fig = plt.figure(figsize=(5.2, 4.2))
 
 shap.plots.waterfall(
     shap_values_xgb[0],
-    max_display=len(X_test.columns),
+    max_display=8,
     show=False
 )
 
 ax = plt.gca()
 
-ax.tick_params(
-    axis="both",
-    labelsize=13
-)
+# ============================================================
+# FONT SIZE — DISESUAIKAN AGAR SETARA DENGAN FIGURE 6
+# ============================================================
+
+FEATURE_FS = 10
+VALUE_FS   = 9
+TICK_FS    = 9
+LABEL_FS   = 10
+
+# ============================================================
+# STYLE FIGURE
+# ============================================================
+
+style_fig(fig, fs=FS)
+
+# ============================================================
+# ATUR SEMUA TEKS INTERNAL WATERFALL
+# ============================================================
+
+for txt in ax.texts:
+    txt.set_fontsize(VALUE_FS)
+
+# ============================================================
+# PERBESAR NAMA FITUR
+# ============================================================
 
 for label in ax.get_yticklabels():
-    label.set_fontsize(13)
+    label.set_fontsize(FEATURE_FS)
+
+# ============================================================
+# PERBESAR TICK SUMBU X
+# ============================================================
 
 for label in ax.get_xticklabels():
-    label.set_fontsize(13)
+    label.set_fontsize(TICK_FS)
 
-# Numerical annotations
-for text in ax.texts:
-    text.set_fontsize(13)
-
-plt.title(
-    "SHAP Waterfall - Tuned XGBoost",
-    fontsize=15
+ax.tick_params(
+    axis="x",
+    labelsize=TICK_FS
 )
 
-plt.tight_layout()
+# ============================================================
+# LABEL SUMBU X
+# ============================================================
 
-save_figure("Figure_SHAP_XGB_waterfall")
+ax.set_xlabel(
+    "SHAP value (impact on model output)",
+    fontsize=LABEL_FS
+)
+
+# ============================================================
+# PINDAHKAN ANOTASI SHAP KECIL
+# ============================================================
+
+from matplotlib.transforms import ScaledTranslation
+
+for txt in ax.texts:
+
+    label = txt.get_text().strip()
+
+    # --------------------------------------------------------
+    # NILAI POSITIF KECIL
+    # --------------------------------------------------------
+
+    if label in [
+        "+0.04",
+        "+0.03",
+        "+0.02",
+        "+0.01"
+    ]:
+
+        txt.set_transform(
+            txt.get_transform()
+            + ScaledTranslation(
+                10 / 72,
+                0,
+                fig.dpi_scale_trans
+            )
+        )
+
+        txt.set_ha("left")
+        txt.set_fontsize(VALUE_FS)
+        txt.set_clip_on(False)
+
+    # --------------------------------------------------------
+    # NILAI NEGATIF KECIL
+    # --------------------------------------------------------
+
+    elif label in [
+        "−0.04",
+        "−0.03",
+        "−0.02",
+        "−0.01",
+        "-0.04",
+        "-0.03",
+        "-0.02",
+        "-0.01"
+    ]:
+
+        txt.set_transform(
+            txt.get_transform()
+            + ScaledTranslation(
+                -10 / 72,
+                0,
+                fig.dpi_scale_trans
+            )
+        )
+
+        txt.set_ha("right")
+        txt.set_fontsize(VALUE_FS)
+        txt.set_clip_on(False)
+
+
+# ============================================================
+# LAYOUT
+# ============================================================
+
+fig.tight_layout(pad=0.8)
+
+# ============================================================
+# SIMPAN FIGURE 8
+# ============================================================
+
+save_figure("Fig8_XGB_waterfall")
 
 plt.show()
+plt.close(fig)
 
 from scipy.stats import spearmanr
 from scipy.special import ndtr
