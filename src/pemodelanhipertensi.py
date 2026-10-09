@@ -1136,7 +1136,7 @@ shap.plots.beeswarm(
 fig = plt.gcf()
 
 # Explicit final figure size
-fig.set_size_inches(5.8, 4.1)
+fig.set_size_inches(5.8, 4.8)
 
 # Apply manuscript font
 style_fig(fig, FS)
@@ -1159,42 +1159,42 @@ plt.show()
 plt.close(fig)
 
 
-# ============================================================
-# RANDOM FOREST - FEATURE IMPORTANCE
-# ============================================================
+# # ============================================================
+# # RANDOM FOREST - FEATURE IMPORTANCE
+# # ============================================================
 
-plt.close("all")
+# plt.close("all")
 
-shap.plots.bar(
-    shap_values_rf_class1,
-    max_display=len(FEATURES),
-    show=False
-)
+# shap.plots.bar(
+#     shap_values_rf_class1,
+#     max_display=len(FEATURES),
+#     show=False
+# )
 
-fig = plt.gcf()
+# fig = plt.gcf()
 
-fig.set_size_inches(
-    5.2,
-    3.7
-)
+# fig.set_size_inches(
+#     5.2,
+#     3.7
+# )
 
-ax = plt.gca()
+# ax = plt.gca()
 
-ax.set_xlabel(
-    "Mean |SHAP value| (probability scale)",
-    fontsize=FS
-)
+# ax.set_xlabel(
+#     "Mean |SHAP value| (probability scale)",
+#     fontsize=FS
+# )
 
-style_fig(fig, FS)
+# style_fig(fig, FS)
 
-fig.tight_layout(pad=0.6)
+# fig.tight_layout(pad=0.6)
 
-save_figure(
-    "Figure_SHAP_RF_bar"
-)
+# save_figure(
+#     "Figure_SHAP_RF_bar"
+# )
 
-plt.show()
-plt.close(fig)
+# plt.show()
+# plt.close(fig)
 
 
 # ============================================================
@@ -1237,7 +1237,7 @@ fig = plt.gcf()
 
 fig.set_size_inches(
     5.8,
-    4.1
+    4.8
 )
 
 style_fig(fig, FS)
@@ -1255,331 +1255,72 @@ plt.close(fig)
 
 
 # ============================================================
-# XGBOOST - FEATURE IMPORTANCE
+#RANDOM FOREST AND XGBOOST - FEATURE IMPORTANCE
 # ============================================================
 
-plt.close("all")
-
-shap.plots.bar(
-    shap_values_xgb,
-    max_display=len(FEATURES),
-    show=False
-)
-
-fig = plt.gcf()
-
-fig.set_size_inches(
-    5.2,
-    3.7
-)
-
-ax = plt.gca()
-
-ax.set_xlabel(
-    "Mean |SHAP value| (log-odds scale)",
-    fontsize=FS
-)
-
-style_fig(fig, FS)
-
-fig.tight_layout(pad=0.6)
-
-save_figure(
-    "Figure_SHAP_XGB_bar"
-)
-
-plt.show()
-plt.close(fig)
-# ============================================================
-# FIGURE 7 — RANDOM FOREST WATERFALL
-# ============================================================
-
-plt.close("all")
-
-fig = plt.figure(figsize=(5.2, 4.2))
-
-shap.plots.waterfall(
-    shap_values_rf_class1[0],
-    max_display=8,
-    show=False
-)
-
-ax = plt.gca()
-
-# ============================================================
-# FONT SIZE — DISESUAIKAN AGAR SETARA DENGAN FIGURE 6
-# ============================================================
-
-FEATURE_FS = 10
-VALUE_FS   = 9
-TICK_FS    = 9
-LABEL_FS   = 10
-
-# ============================================================
-# STYLE FIGURE
-# ============================================================
-
-style_fig(fig, fs=FS)
-
-# ============================================================
-# ATUR SEMUA TEKS INTERNAL WATERFALL
-# ============================================================
-
-for txt in ax.texts:
-
-    txt.set_fontsize(VALUE_FS)
-
-# ============================================================
-# PERBESAR NAMA FITUR
-# ============================================================
-
-for label in ax.get_yticklabels():
-    label.set_fontsize(FEATURE_FS)
-
-# ============================================================
-# PERBESAR TICK SUMBU X
-# ============================================================
-
-for label in ax.get_xticklabels():
-    label.set_fontsize(TICK_FS)
-
-ax.tick_params(
-    axis="x",
-    labelsize=TICK_FS
-)
-
-# ============================================================
-# LABEL SUMBU X
-# ============================================================
-
-ax.set_xlabel(
-    "SHAP value (impact on model output)",
-    fontsize=LABEL_FS
-)
-
-# ============================================================
-# PINDAHKAN ANOTASI SHAP KECIL
-# ============================================================
-
-from matplotlib.transforms import ScaledTranslation
-
-for txt in ax.texts:
-
-    label = txt.get_text().strip()
-
-    # --------------------------------------------------------
-    # NILAI POSITIF KECIL
-    # --------------------------------------------------------
-
-    if label in [
-        "+0.04",
-        "+0.03",
-        "+0.02",
-        "+0.01"
-    ]:
-
-        txt.set_transform(
-            txt.get_transform()
-            + ScaledTranslation(
-                10 / 72,
-                0,
-                fig.dpi_scale_trans
-            )
-        )
-
-        txt.set_ha("left")
-        txt.set_fontsize(VALUE_FS)
-        txt.set_clip_on(False)
-
-    # --------------------------------------------------------
-    # NILAI NEGATIF KECIL
-    # --------------------------------------------------------
-
-    elif label in [
-        "−0.04",
-        "−0.03",
-        "−0.02",
-        "−0.01",
-        "-0.04",
-        "-0.03",
-        "-0.02",
-        "-0.01"
-    ]:
-
-        txt.set_transform(
-            txt.get_transform()
-            + ScaledTranslation(
-                -10 / 72,
-                0,
-                fig.dpi_scale_trans
-            )
-        )
-
-        txt.set_ha("right")
-        txt.set_fontsize(VALUE_FS)
-        txt.set_clip_on(False)
-
-
-# ============================================================
-# LAYOUT
-# ============================================================
-
-fig.tight_layout(pad=0.8)
-
-# ============================================================
-# SIMPAN FIGURE 7
-# ============================================================
-
-save_figure("Fig7_RF_waterfall")
-
-plt.show()
-plt.close(fig)
-
-
-# ============================================================
-# FIGURE 8 — XGBOOST WATERFALL
-# ============================================================
-
-plt.close("all")
-
-fig = plt.figure(figsize=(5.2, 4.2))
-
-shap.plots.waterfall(
-    shap_values_xgb[0],
-    max_display=8,
-    show=False
-)
-
-ax = plt.gca()
-
-# ============================================================
-# FONT SIZE — DISESUAIKAN AGAR SETARA DENGAN FIGURE 6
-# ============================================================
-
-FEATURE_FS = 10
-VALUE_FS   = 9
-TICK_FS    = 9
-LABEL_FS   = 10
-
-# ============================================================
-# STYLE FIGURE
-# ============================================================
-
-style_fig(fig, fs=FS)
-
-# ============================================================
-# ATUR SEMUA TEKS INTERNAL WATERFALL
-# ============================================================
-
-for txt in ax.texts:
-    txt.set_fontsize(VALUE_FS)
-
-# ============================================================
-# PERBESAR NAMA FITUR
-# ============================================================
-
-for label in ax.get_yticklabels():
-    label.set_fontsize(FEATURE_FS)
-
-# ============================================================
-# PERBESAR TICK SUMBU X
-# ============================================================
-
-for label in ax.get_xticklabels():
-    label.set_fontsize(TICK_FS)
-
-ax.tick_params(
-    axis="x",
-    labelsize=TICK_FS
-)
-
-# ============================================================
-# LABEL SUMBU X
-# ============================================================
-
-ax.set_xlabel(
-    "SHAP value (impact on model output)",
-    fontsize=LABEL_FS
-)
-
-# ============================================================
-# PINDAHKAN ANOTASI SHAP KECIL
-# ============================================================
-
-from matplotlib.transforms import ScaledTranslation
-
-for txt in ax.texts:
-
-    label = txt.get_text().strip()
-
-    # --------------------------------------------------------
-    # NILAI POSITIF KECIL
-    # --------------------------------------------------------
-
-    if label in [
-        "+0.04",
-        "+0.03",
-        "+0.02",
-        "+0.01"
-    ]:
-
-        txt.set_transform(
-            txt.get_transform()
-            + ScaledTranslation(
-                10 / 72,
-                0,
-                fig.dpi_scale_trans
-            )
-        )
-
-        txt.set_ha("left")
-        txt.set_fontsize(VALUE_FS)
-        txt.set_clip_on(False)
-
-    # --------------------------------------------------------
-    # NILAI NEGATIF KECIL
-    # --------------------------------------------------------
-
-    elif label in [
-        "−0.04",
-        "−0.03",
-        "−0.02",
-        "−0.01",
-        "-0.04",
-        "-0.03",
-        "-0.02",
-        "-0.01"
-    ]:
-
-        txt.set_transform(
-            txt.get_transform()
-            + ScaledTranslation(
-                -10 / 72,
-                0,
-                fig.dpi_scale_trans
-            )
-        )
-
-        txt.set_ha("right")
-        txt.set_fontsize(VALUE_FS)
-        txt.set_clip_on(False)
-
-
-# ============================================================
-# LAYOUT
-# ============================================================
-
-fig.tight_layout(pad=0.8)
-
-# ============================================================
-# SIMPAN FIGURE 8
-# ============================================================
-
-save_figure("Fig8_XGB_waterfall")
-
-plt.show()
-plt.close(fig)
-
+def bar_manual(mean_abs, names, fname, xlabel, fs=FS, figsize=(5.8, 4.0)):
+    v = np.asarray(mean_abs, float); order = np.argsort(v)      # terbesar di atas
+    fig, ax = plt.subplots(figsize=figsize)
+    ax.barh(np.array(names)[order], v[order], color="#ff0051", height=0.65)
+    for k, val in enumerate(v[order]):
+        ax.text(val + v.max() * 0.015, k, f"{val:.2f}", va="center", fontsize=fs)
+    ax.set_xlim(0, v.max() * 1.18)
+    ax.set_xlabel(xlabel, fontsize=fs); ax.tick_params(labelsize=fs)
+    for s in ("top", "right"): ax.spines[s].set_visible(False)
+    fig.savefig(fname + ".pdf", bbox_inches="tight")
+    fig.savefig(fname + ".png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+# RANDOM FOREST - FEATURE IMPORTANCE (Gambar 3)
+bar_manual(np.abs(shap_values_rf_class1.values).mean(0),
+           shap_values_rf_class1.feature_names,
+           "Figure_SHAP_RF_bar", "Mean |SHAP value| (probability scale)")
+
+# XGBOOST - FEATURE IMPORTANCE (Gambar 4)
+bar_manual(np.abs(shap_values_xgb.values).mean(0),
+           shap_values_xgb.feature_names,
+           "Figure_SHAP_XGB_bar", "Mean |SHAP value| (log-odds scale)")
+
+FS = 12   # samakan dengan ukuran huruf Gambar 3-6
+
+def waterfall_manual(values, data, names, base, fname, xlabel, fs=FS, figsize=(5.8, 4.8)):
+    v = np.asarray(values, float); order = np.argsort(-np.abs(v))
+    starts = base + np.concatenate([[0], np.cumsum(v[order])[:-1]])
+    ends = starts + v[order]; final = base + v.sum()
+    lo = min(starts.min(), ends.min(), base, final)
+    hi = max(starts.max(), ends.max(), base, final)
+    pad = 0.20 * (hi - lo)
+    fig, ax = plt.subplots(figsize=figsize)
+    for k, i in enumerate(order):
+        pos = v[i] >= 0
+        col = "#ff0051" if pos else "#008bfb"
+        ax.barh(k, v[i], left=starts[k], height=0.62, color=col)
+        x = starts[k] + v[i] + (0.015 if pos else -0.015) * (hi - lo)
+        ax.text(x, k, f"{v[i]:+.2f}", va="center",
+                ha="left" if pos else "right", fontsize=fs, color=col)
+    ax.set_yticks(range(len(order)))
+    ax.set_yticklabels([f"{data[i]:g} = {names[i]}" for i in order], fontsize=fs)
+    ax.invert_yaxis()
+    ax.axvline(base, color="gray", ls=":", lw=1)
+    ax.axvline(final, color="gray", ls=":", lw=1)
+    ax.set_xlim(lo - pad, hi + pad)
+    ax.set_xlabel(xlabel, fontsize=fs); ax.tick_params(labelsize=fs)
+    for s in ("top", "right", "left"): ax.spines[s].set_visible(False)
+    ax.text(base, -0.9, f"E[f(X)] = {base:.3f}", ha="center", va="bottom", fontsize=fs, color="gray")
+    ax.text(final, -0.9, f"f(x) = {final:.3f}", ha="center", va="bottom", fontsize=fs, color="gray")
+    fig.savefig(fname + ".pdf", bbox_inches="tight")
+    fig.savefig(fname + ".png", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+# FIGURE 7 - Random Forest
+r = shap_values_rf_class1[0]
+waterfall_manual(r.values, r.data, r.feature_names, float(r.base_values),
+                 "Fig7_RF_waterfall", "Model output (probability scale)")
+
+# FIGURE 8 - XGBoost
+r = shap_values_xgb[0]
+waterfall_manual(r.values, r.data, r.feature_names, float(r.base_values),
+                 "Fig8_XGB_waterfall", "Model output (log-odds scale)")
 from scipy.stats import spearmanr
 from scipy.special import ndtr
 from sklearn.utils import resample
