@@ -1283,6 +1283,12 @@ bar_manual(np.abs(shap_values_xgb.values).mean(0),
 
 FS = 12   # samakan dengan ukuran huruf Gambar 3-6
 
+def fmt_contrib(val, decimals=2):
+    """Label kontribusi: nol hasil pembulatan ditulis ≈0; minus memakai tanda minus panjang."""
+    if round(abs(val), decimals) == 0:
+        return "≈0"
+    return f"{val:+.{decimals}f}".replace("-", "−")
+
 def waterfall_manual(values, data, names, base, fname, xlabel, fs=FS, figsize=(5.8, 4.8)):
     v = np.asarray(values, float); order = np.argsort(-np.abs(v))
     starts = base + np.concatenate([[0], np.cumsum(v[order])[:-1]])
@@ -1296,8 +1302,10 @@ def waterfall_manual(values, data, names, base, fname, xlabel, fs=FS, figsize=(5
         col = "#ff0051" if pos else "#008bfb"
         ax.barh(k, v[i], left=starts[k], height=0.62, color=col)
         x = starts[k] + v[i] + (0.015 if pos else -0.015) * (hi - lo)
-        ax.text(x, k, f"{v[i]:+.2f}", va="center",
-                ha="left" if pos else "right", fontsize=fs, color=col)
+        label = fmt_contrib(v[i])
+        ax.text(x, k, label, va="center",
+                ha="left" if pos else "right", fontsize=fs,
+                color="gray" if label == "≈0" else col)
     ax.set_yticks(range(len(order)))
     ax.set_yticklabels([f"{data[i]:g} = {names[i]}" for i in order], fontsize=fs)
     ax.invert_yaxis()
@@ -1321,6 +1329,7 @@ waterfall_manual(r.values, r.data, r.feature_names, float(r.base_values),
 r = shap_values_xgb[0]
 waterfall_manual(r.values, r.data, r.feature_names, float(r.base_values),
                  "Fig8_XGB_waterfall", "Model output (log-odds scale)")
+
 from scipy.stats import spearmanr
 from scipy.special import ndtr
 from sklearn.utils import resample
